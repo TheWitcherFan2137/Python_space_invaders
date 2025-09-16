@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 from pygame.locals import *
 
 
@@ -8,6 +9,7 @@ SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 FPS = 60
 SPEED = 5
+SCORE = 0
 
 
 # Initialize
@@ -25,6 +27,28 @@ pygame.display.set_icon(icon)
 
 
 
+#========== Functions ==========#
+def player(x, y):
+    screen.blit(playerImg, (x, y))
+
+def enemy(x, y):
+    screen.blit(enemyImg, (x, y))
+
+def random_enemy_position(width):
+    enemyX = random.randint (0, SCREEN_WIDTH - width)
+    enemyY = random.randint (50, 150)
+    return enemyX, enemyY
+
+def fire_bullet(x, y):
+    global bullet_state
+    bullet_state = "fire"
+    screen.blit(bulletImg, (x + player_width / 2 - bullet_width / 2, y - bullet_height))
+
+def isCollision (enemyX, enemyY, bulletX, bulletY):
+    enemy_rect = pygame.Rect(enemyX, enemyY, enemy_width, enemy_height)
+    bullet_rect = pygame.Rect(bulletX, bulletY, bullet_width, bullet_height)
+    return enemy_rect.colliderect(bullet_rect)
+
 #========= Entity data =========#
 # Player
 playerImg = pygame.image.load("player.png")
@@ -40,6 +64,7 @@ playerSpeed = SPEED
 enemyImg = pygame.image.load("enemy.png")
 enemy_width, enemy_height = enemyImg.get_size()
 
+random_enemy_position(enemy_width)
 enemyX = random.randint (0, SCREEN_WIDTH - enemy_width)
 enemyY = random.randint (50, 150)
 enemyX_change = SPEED / 2
@@ -55,20 +80,6 @@ bulletY_change = SPEED * 2
 bullet_state = "ready"
 # ready - You can't see the bullet on the screen
 # fire - The bullet is currently moving
-
-
-
-#========== Functions ==========#
-def player(x, y):
-    screen.blit(playerImg, (x, y))
-
-def enemy(x, y):
-    screen.blit(enemyImg, (x, y))
-
-def fire_bullet(x, y):
-    global bullet_state
-    bullet_state = "fire"
-    screen.blit(bulletImg, (x + player_width / 2 - bullet_width / 2, y - bullet_height))
 
 
 
@@ -98,7 +109,7 @@ while running:
 
     # Shoting
     if keys[K_SPACE]:
-        if bullet_state is "ready":
+        if bullet_state == "ready":
             bulletX = playerX
             fire_bullet(bulletX, bulletY)
  
@@ -125,9 +136,18 @@ while running:
         bulletY = 480
         bullet_state = "ready"
 
-    if bullet_state is "fire":
+    if bullet_state == "fire":
         fire_bullet(bulletX, bulletY)
         bulletY -= bulletY_change
+
+    # Collision
+    collision = isCollision(enemyX, enemyY, bulletX, bulletY)
+    if collision:
+        bulletY = 480
+        bullet_state = "ready"
+        SCORE += 1
+        enemyX, enemyY = random_enemy_position(enemy_width)
+        
     
     #==== Display on screen ====#
     player(playerX, playerY)
