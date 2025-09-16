@@ -29,10 +29,7 @@ pygame.display.set_icon(icon)
 
 #========== Functions ==========#
 def player(x, y):
-    screen.blit(playerImg, (x, y))
-
-def enemy(x, y):
-    screen.blit(enemyImg, (x, y))
+        screen.blit(playerImg, (x, y))
 
 def random_enemy_position(width):
     enemyX = random.randint (0, SCREEN_WIDTH - width)
@@ -44,7 +41,7 @@ def fire_bullet(x, y):
     bullet_state = "fire"
     screen.blit(bulletImg, (x + player_width / 2 - bullet_width / 2, y - bullet_height))
 
-def isCollision (enemyX, enemyY, bulletX, bulletY):
+def isCollision (enemyX, enemyY, bulletX, bulletY, enemy_width, enemy_height):
     enemy_rect = pygame.Rect(enemyX, enemyY, enemy_width, enemy_height)
     bullet_rect = pygame.Rect(bulletX, bulletY, bullet_width, bullet_height)
     return enemy_rect.colliderect(bullet_rect)
@@ -61,14 +58,21 @@ playerSpeed = SPEED
 
 
 # Enemy
-enemyImg = pygame.image.load("enemy.png")
-enemy_width, enemy_height = enemyImg.get_size()
+enemyImg = []
+enemyX = []
+enemyY = []
+enemyX_change = []
+enemyY_change = []
+num_of_enemies = 6
 
-random_enemy_position(enemy_width)
-enemyX = random.randint (0, SCREEN_WIDTH - enemy_width)
-enemyY = random.randint (50, 150)
-enemyX_change = SPEED / 2
-enemyY_change = SCREEN_HEIGHT // 15
+for i in range(num_of_enemies):
+    enemyImg.append(pygame.image.load("enemy.png"))
+    enemy_width, enemy_height = enemyImg[i].get_size()
+    x, y = random_enemy_position(enemy_width)
+    enemyX.append(x)
+    enemyY.append(y)
+    enemyX_change.append(SPEED / 2)
+    enemyY_change.append(SCREEN_HEIGHT // 15)
 
 
 # Bullet
@@ -122,14 +126,15 @@ while running:
         playerX = SCREEN_WIDTH - player_width
     
     # Enemy moving
-    enemyX += enemyX_change
+    for i in range(num_of_enemies):
+        enemyX[i] += enemyX_change[i]
 
-    if enemyX <= 0:
-        enemyX_change = SPEED / 2
-        enemyY += enemyY_change
-    elif enemyX >= SCREEN_WIDTH - enemy_width:
-        enemyX_change = -SPEED / 2
-        enemyY += enemyY_change
+        if enemyX[i] <= 0:
+            enemyX_change[i] = SPEED / 2
+            enemyY[i] += enemyY_change[i]
+        elif enemyX[i] >= SCREEN_WIDTH - enemy_width:
+            enemyX_change[i] = -SPEED / 2
+            enemyY[i] += enemyY_change[i]
 
     # Bullet movement
     if bulletY <= 0:
@@ -141,16 +146,18 @@ while running:
         bulletY -= bulletY_change
 
     # Collision
-    collision = isCollision(enemyX, enemyY, bulletX, bulletY)
-    if collision:
-        bulletY = 480
-        bullet_state = "ready"
-        SCORE += 1
-        enemyX, enemyY = random_enemy_position(enemy_width)
+    for i in range(num_of_enemies):
+        collision = isCollision(enemyX[i], enemyY[i], bulletX, bulletY, enemy_width, enemy_height)
+        if collision:
+            bulletY = 480
+            bullet_state = "ready"
+            SCORE += 1
+            enemyX[i], enemyY[i] = random_enemy_position(enemy_width)
         
     
     #==== Display on screen ====#
     player(playerX, playerY)
-    enemy(enemyX, enemyY)
+    for i in range(num_of_enemies):
+        screen.blit(enemyImg[i], (enemyX[i], enemyY[i]))
     pygame.display.update()
     clock.tick(FPS)
